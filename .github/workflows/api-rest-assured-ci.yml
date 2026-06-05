@@ -201,6 +201,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      - name: Preparar repositorio
+        uses: actions/checkout@v4
+
       - name: Descargar reporte Rest Assured
         uses: actions/download-artifact@v4
         with:
@@ -213,59 +216,24 @@ jobs:
           name: allure-report-playwright
           path: public/playwright
 
-      - name: Crear landing page de reportes
+      - name: Preparar Front Report Allure
         shell: bash
         run: |
-          cat > public/index.html <<'EOF'
-          <!DOCTYPE html>
-          <html lang="es">
-          <head>
-            <meta charset="UTF-8">
-            <title>API Automation Reports</title>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                margin: 40px;
-                background: #0d1117;
-                color: #f0f6fc;
-              }
-              h1 {
-                color: #58a6ff;
-              }
-              .card {
-                border: 1px solid #30363d;
-                border-radius: 8px;
-                padding: 20px;
-                margin-bottom: 16px;
-                background: #161b22;
-              }
-              a {
-                color: #58a6ff;
-                font-size: 18px;
-                text-decoration: none;
-              }
-              a:hover {
-                text-decoration: underline;
-              }
-            </style>
-          </head>
-          <body>
-            <h1>API Automation Reports</h1>
+          set -Eeuo pipefail
 
-            <div class="card">
-              <h2>Rest Assured</h2>
-              <p>Reporte Allure generado desde pruebas API con Java + Rest Assured.</p>
-              <a href="./rest-assured/index.html">Abrir reporte Allure Rest Assured</a>
-            </div>
+          cp -R front-report-allure/. public/
 
-            <div class="card">
-              <h2>Playwright API</h2>
-              <p>Reporte Allure generado desde pruebas API con TypeScript + Playwright.</p>
-              <a href="./playwright/index.html">Abrir reporte Allure Playwright</a>
-            </div>
-          </body>
-          </html>
+          cat > public/report-metadata.json <<EOF
+          {
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "runId": "${{ github.run_id }}",
+            "publishedAt": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          }
           EOF
+
+          echo "Contenido final de public:"
+          find public -maxdepth 2 -type f | sort | head -80
 
       - name: Preparar artifact para GitHub Pages
         uses: actions/upload-pages-artifact@v3
