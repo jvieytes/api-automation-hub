@@ -1,0 +1,13 @@
+node_modules/
+**/node_modules/
+
+target/
+**/target/
+
+.env
+api.log
+api.pid
+
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,31 @@
+{
+  "name": "@portfolio/api",
+  "version": "1.0.0",
+  "description": "Simple CRUD API for QA automation portfolio",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [
+    "api",
+    "crud",
+    "qa",
+    "automation",
+    "portfolio"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "2.8.5",
+    "express": "4.21.2",
+    "helmet": "7.1.0",
+    "morgan": "1.11.0",
+    "swagger-ui-express": "5.0.1",
+    "yamljs": "0.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.0"
+  },
+  "private": true
+}
