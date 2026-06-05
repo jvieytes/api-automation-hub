@@ -11,8 +11,10 @@
   "scripts": {
     "api:start": "pnpm --filter @portfolio/api start",
     "api:dev": "pnpm --filter @portfolio/api dev",
+    "audit": "pnpm audit --audit-level moderate",
     "test:playwright": "pnpm --filter @portfolio/playwright-api test",
-    "audit:js": "pnpm audit --audit-level moderate"
+    "allure:generate": "pnpm exec allure generate tests/rest-assured-java/target/allure-results tests/playwright-ts/allure-results --clean -o allure-report",
+    "allure:open": "pnpm exec allure open allure-report"
   },
   "keywords": [
     "qa",
@@ -25,5 +27,8 @@
     "pnpm",
     "github-actions"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "allure": "3.9.0"
+  }
 }
