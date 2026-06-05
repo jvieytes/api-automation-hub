@@ -1,0 +1,16 @@
+packages:
+  - "api"
+
+minimumReleaseAge: 1440
+
+allowBuilds:
+  "@scarf/scarf": false
+
+overrides:
+  express: 4.21.2
+  qs: 6.15.2
+  path-to-regexp: 0.1.13
+  serve-static: 1.16.2
+  send: 0.19.0
+  cookie: 0.7.2
+  on-headers: 1.1.0

@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Portfolio CRUD API
+  version: 1.0.0
+  description: Simple CRUD API created as a QA Automation portfolio target.
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      summary: Get API health status
+      responses:
+        '200':
+          description: API is healthy
+  /api/v1/tasks:
+    get:
+      summary: List tasks
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [TODO, IN_PROGRESS, DONE]
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tasks retrieved successfully
+        '400':
+          description: Invalid filter
+    post:
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            examples:
+              valid:
+                value:
+                  title: Crear casos de prueba
+                  description: Automatizar flujo CRUD de tareas
+                  status: TODO
+      responses:
+        '201':
+          description: Task created successfully
+        '400':
+          description: Validation error
+  /api/v1/tasks/{id}:
+    get:
+      summary: Get task by ID
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task retrieved successfully
+        '404':
+          description: Task not found
+    put:
+      summary: Replace task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+        '400':
+          description: Validation error
+        '404':
+          description: Task not found
+    delete:
+      summary: Delete task
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task deleted successfully
+        '404':
+          description: Task not found
+  /api/v1/tasks/{id}/status:
+    patch:
+      summary: Update task status
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [TODO, IN_PROGRESS, DONE]
+      responses:
+        '200':
+          description: Task status updated successfully
+        '400':
+          description: Validation error
+        '404':
+          description: Task not found
+  /api/v1/test/reset:
+    post:
+      summary: Reset test data
+      description: Only available when NODE_ENV is not production.
+      responses:
+        '200':
+          description: Test data reset successfully
+        '403':
+          description: Reset disabled in production
+components:
+  parameters:
+    TaskId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: integer
+      example: 1
+  schemas:
+    TaskRequest:
+      type: object
+      required:
+        - title
+        - status
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 80
+        description:
+          type: string
+          maxLength: 250
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, DONE]
+    Task:
+      allOf:
+        - $ref: '#/components/schemas/TaskRequest'
+        - type: object
+          properties:
+            id:
+              type: integer
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time

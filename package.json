@@ -1,0 +1,29 @@
+{
+  "name": "portfolio-api-automation-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo QA Automation portfolio with a CRUD API and three automation frameworks.",
+  "packageManager": "pnpm@10.23.0",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=10.16.0"
+  },
+  "scripts": {
+    "api:start": "pnpm --filter @portfolio/api start",
+    "api:dev": "pnpm --filter @portfolio/api dev",
+    "test:playwright": "pnpm --filter @portfolio/playwright-api test",
+    "audit:js": "pnpm audit --audit-level moderate"
+  },
+  "keywords": [
+    "qa",
+    "automation",
+    "api",
+    "crud",
+    "playwright",
+    "rest-assured",
+    "pytest",
+    "pnpm",
+    "github-actions"
+  ],
+  "license": "MIT"
+}
