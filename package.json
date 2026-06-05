@@ -27,5 +27,8 @@
     "pnpm",
     "github-actions"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "allure": "3.9.0"
+  }
 }
