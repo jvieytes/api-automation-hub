@@ -13,6 +13,8 @@ on:
 permissions:
   contents: read
   actions: read
+  pages: write
+  id-token: write
 
 jobs:
   api-rest-assured-tests:
@@ -34,11 +36,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-
-          echo "Levantando API en $REST_BASE_URL"
           pnpm api:start > api.log 2>&1 &
           echo $! > api.pid
-
           sleep 1
 
           if ! ps -p "$(cat api.pid)" > /dev/null; then
@@ -47,18 +46,13 @@ jobs:
             exit 1
           fi
 
-          echo "API iniciada con PID $(cat api.pid)"
-
       - name: Healthcheck API
         shell: bash
         run: |
           set -Eeuo pipefail
 
-          echo "Validando healthcheck en $REST_BASE_URL/health"
-
           for i in {1..30}; do
             if curl -fsS "$REST_BASE_URL/health"; then
-              echo ""
               echo "API lista para ejecutar pruebas."
               exit 0
             fi
@@ -67,8 +61,7 @@ jobs:
             sleep 2
           done
 
-          echo "La API no respondió correctamente al healthcheck."
-          echo "Log de la API:"
+          echo "La API no respondió correctamente."
           cat api.log
           exit 1
 
@@ -77,14 +70,36 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          mvn test -DbaseUrl="$REST_BASE_URL"
+          mvn clean test allure:report -DbaseUrl="$REST_BASE_URL"
 
       - name: Publicar reporte
         if: always()
         uses: ./.github/actions/publish-api-report
         with:
-          artifact-name: api-rest-assured-reports
+          artifact-name: allure-api-rest-assured-report
           report-directory: tests/rest-assured-java/target/surefire-reports
-          site-directory: tests/rest-assured-java/target/site
+          allure-results-directory: tests/rest-assured-java/target/allure-results
+          allure-report-directory: tests/rest-assured-java/target/site/allure-report
           api-log: api.log
           api-pid-file: api.pid
+
+      - name: Upload Allure report for GitHub Pages
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: tests/rest-assured-java/target/site/allure-report
+
+  deploy-allure-report:
+    name: Deploy Allure Report to GitHub Pages
+    needs: api-rest-assured-tests
+    if: always()
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy Allure Report
+        id: deployment
+        uses: actions/deploy-pages@v4

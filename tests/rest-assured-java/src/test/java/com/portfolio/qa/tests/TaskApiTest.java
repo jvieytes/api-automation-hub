@@ -1,6 +1,10 @@
 package com.portfolio.qa.tests;
 
 import com.portfolio.qa.payloads.TaskPayload;
+
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +12,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 
+@Epic("Portfolio API")
+@Feature("Tasks CRUD")
 class TaskApiTest extends BaseApiTest {
 
     @BeforeEach

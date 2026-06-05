@@ -1,5 +1,5 @@
 name: Publicar reporte
-description: Genera resumen visual, reporte HTML Surefire, sube artifacts y detiene la API.
+description: Genera reporte Allure, resumen visual, sube artifacts y detiene la API.
 
 inputs:
   artifact-name:
@@ -8,8 +8,11 @@ inputs:
   report-directory:
     description: Directorio de reportes Surefire XML/TXT.
     required: true
-  site-directory:
-    description: Directorio del reporte HTML de Maven Surefire.
+  allure-results-directory:
+    description: Directorio de resultados crudos de Allure.
+    required: true
+  allure-report-directory:
+    description: Directorio del reporte HTML de Allure.
     required: true
   api-log:
     description: Archivo log de la API.
@@ -21,17 +24,17 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Generate Maven Surefire HTML report
+    - name: Generate Allure HTML report
       shell: bash
       run: |
-        mvn -f tests/rest-assured-java/pom.xml surefire-report:report-only || true
+        mvn -f tests/rest-assured-java/pom.xml allure:report || true
 
     - name: Generate GitHub Actions summary
       shell: bash
       run: |
         REPORT_DIR="${{ inputs.report-directory }}"
 
-        echo "## Reporte API Rest Assured" >> "$GITHUB_STEP_SUMMARY"
+        echo "## Reporte API Rest Assured - Allure" >> "$GITHUB_STEP_SUMMARY"
         echo "" >> "$GITHUB_STEP_SUMMARY"
 
         if ls "$REPORT_DIR"/TEST-*.xml >/dev/null 2>&1; then
@@ -58,12 +61,11 @@ runs:
         fi
 
         echo "" >> "$GITHUB_STEP_SUMMARY"
-        echo "### Archivos publicados" >> "$GITHUB_STEP_SUMMARY"
-        echo "- Reportes Surefire XML/TXT" >> "$GITHUB_STEP_SUMMARY"
-        echo "- Reporte HTML Maven Surefire" >> "$GITHUB_STEP_SUMMARY"
-        echo "- Log de la API" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Reporte Allure publicado" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Descargar artifact: \`${{ inputs.artifact-name }}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Abrir archivo: \`allure-report/index.html\`" >> "$GITHUB_STEP_SUMMARY"
 
-    - name: Upload API test reports
+    - name: Upload Allure report artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
@@ -71,7 +73,8 @@ runs:
         path: |
           ${{ inputs.api-log }}
           ${{ inputs.report-directory }}/
-          ${{ inputs.site-directory }}/
+          ${{ inputs.allure-results-directory }}/
+          ${{ inputs.allure-report-directory }}/
 
     - name: Stop API
       shell: bash
