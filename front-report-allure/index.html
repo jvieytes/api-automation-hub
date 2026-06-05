@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Automation Reports</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Portfolio QA Automation</p>
+        <h1>API Automation Reports</h1>
+        <p class="description">
+          Reportes Allure generados desde automatización API con Rest Assured y Playwright.
+        </p>
+      </div>
+
+      <div class="status-card">
+        <span class="status-dot"></span>
+        <span>Reportes publicados correctamente</span>
+      </div>
+    </section>
+
+    <section class="metadata" aria-label="Metadata del pipeline">
+      <article>
+        <span>Repositorio</span>
+        <strong id="repo-name">Cargando...</strong>
+      </article>
+
+      <article>
+        <span>Branch</span>
+        <strong id="branch-name">Cargando...</strong>
+      </article>
+
+      <article>
+        <span>Workflow Run</span>
+        <strong id="run-id">Cargando...</strong>
+      </article>
+
+      <article>
+        <span>Publicado</span>
+        <strong id="published-at">Cargando...</strong>
+      </article>
+    </section>
+
+    <section class="reports-grid">
+      <article class="report-card">
+        <div class="card-header">
+          <div class="icon java">RA</div>
+          <div>
+            <h2>Rest Assured</h2>
+            <p>Java + JUnit 5 + Rest Assured</p>
+          </div>
+        </div>
+
+        <p class="card-description">
+          Reporte Allure con evidencia detallada de requests, responses, status codes,
+          headers y bodies adjuntos desde las pruebas API en Java.
+        </p>
+
+        <a class="button" href="./rest-assured/index.html">
+          Abrir reporte Rest Assured
+        </a>
+      </article>
+
+      <article class="report-card">
+        <div class="card-header">
+          <div class="icon ts">PW</div>
+          <div>
+            <h2>Playwright API</h2>
+            <p>TypeScript + Playwright API Testing</p>
+          </div>
+        </div>
+
+        <p class="card-description">
+          Reporte Allure con evidencia API adjunta: request, response, status,
+          headers y body por cada operación automatizada.
+        </p>
+
+        <a class="button" href="./playwright/index.html">
+          Abrir reporte Playwright
+        </a>
+      </article>
+    </section>
+
+    <section class="footer-note">
+      <p>
+        Este portal centraliza los reportes Allure publicados desde GitHub Actions
+        para facilitar revisión técnica y presentación de portafolio.
+      </p>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
