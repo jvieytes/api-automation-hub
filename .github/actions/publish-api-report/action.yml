@@ -1,0 +1,84 @@
+name: Publicar reporte
+description: Genera resumen visual, reporte HTML Surefire, sube artifacts y detiene la API.
+
+inputs:
+  artifact-name:
+    description: Nombre del artifact publicado en GitHub Actions.
+    required: true
+  report-directory:
+    description: Directorio de reportes Surefire XML/TXT.
+    required: true
+  site-directory:
+    description: Directorio del reporte HTML de Maven Surefire.
+    required: true
+  api-log:
+    description: Archivo log de la API.
+    required: true
+  api-pid-file:
+    description: Archivo que contiene el PID de la API.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Maven Surefire HTML report
+      shell: bash
+      run: |
+        mvn -f tests/rest-assured-java/pom.xml surefire-report:report-only || true
+
+    - name: Generate GitHub Actions summary
+      shell: bash
+      run: |
+        REPORT_DIR="${{ inputs.report-directory }}"
+
+        echo "## Reporte API Rest Assured" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+
+        if ls "$REPORT_DIR"/TEST-*.xml >/dev/null 2>&1; then
+          TOTAL_TESTS=$(grep -ho 'tests="[0-9]*"' "$REPORT_DIR"/TEST-*.xml | sed 's/[^0-9]//g' | awk '{s+=$1} END {print s+0}')
+          TOTAL_FAILURES=$(grep -ho 'failures="[0-9]*"' "$REPORT_DIR"/TEST-*.xml | sed 's/[^0-9]//g' | awk '{s+=$1} END {print s+0}')
+          TOTAL_ERRORS=$(grep -ho 'errors="[0-9]*"' "$REPORT_DIR"/TEST-*.xml | sed 's/[^0-9]//g' | awk '{s+=$1} END {print s+0}')
+          TOTAL_SKIPPED=$(grep -ho 'skipped="[0-9]*"' "$REPORT_DIR"/TEST-*.xml | sed 's/[^0-9]//g' | awk '{s+=$1} END {print s+0}')
+
+          echo "| Métrica | Resultado |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---:|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tests ejecutados | $TOTAL_TESTS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Fallos | $TOTAL_FAILURES |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Errores | $TOTAL_ERRORS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Omitidos | $TOTAL_SKIPPED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$TOTAL_FAILURES" -eq 0 ] && [ "$TOTAL_ERRORS" -eq 0 ]; then
+            echo "### ✅ Estado general: pruebas exitosas" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ❌ Estado general: pruebas con errores o fallos" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        else
+          echo "No se encontraron archivos XML de Surefire en \`$REPORT_DIR\`." >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Archivos publicados" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Reportes Surefire XML/TXT" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Reporte HTML Maven Surefire" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Log de la API" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload API test reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        if-no-files-found: warn
+        path: |
+          ${{ inputs.api-log }}
+          ${{ inputs.report-directory }}/
+          ${{ inputs.site-directory }}/
+
+    - name: Stop API
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.api-pid-file }}" ]; then
+          echo "Deteniendo API con PID $(cat "${{ inputs.api-pid-file }}")"
+          kill "$(cat "${{ inputs.api-pid-file }}")" || true
+        else
+          echo "No existe archivo PID de API. No hay proceso que detener."
+        fi

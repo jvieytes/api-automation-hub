@@ -10,6 +10,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   api-rest-assured-tests:
     name: Run API and Rest Assured tests
@@ -20,81 +24,67 @@ jobs:
       BASE_URL: http://localhost:3000
 
     steps:
-      - name: Checkout repository
+      - name: Preparar repositorio
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Instalar Dependencias
+        uses: ./.github/actions/install-dependencies
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          run_install: false
-
-      - name: Verify Node and pnpm versions
+      - name: Levantar API
+        shell: bash
         run: |
-          node -v
-          pnpm -v
+          set -Eeuo pipefail
 
-      - name: Install Node dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run pnpm audit
-        run: pnpm audit --audit-level moderate
-
-      - name: Start API
-        run: |
+          echo "Levantando API en $REST_BASE_URL"
           pnpm api:start > api.log 2>&1 &
           echo $! > api.pid
 
-      - name: Wait for API healthcheck
+          sleep 1
+
+          if ! ps -p "$(cat api.pid)" > /dev/null; then
+            echo "La API no logró iniciar."
+            cat api.log
+            exit 1
+          fi
+
+          echo "API iniciada con PID $(cat api.pid)"
+
+      - name: Healthcheck API
+        shell: bash
         run: |
-          echo "Waiting for API at $REST_BASE_URL/health"
+          set -Eeuo pipefail
+
+          echo "Validando healthcheck en $REST_BASE_URL/health"
 
           for i in {1..30}; do
             if curl -fsS "$REST_BASE_URL/health"; then
-              echo "API is ready"
+              echo ""
+              echo "API lista para ejecutar pruebas."
               exit 0
             fi
 
-            echo "API not ready yet. Retry $i/30"
+            echo "API aún no responde. Reintento $i/30"
             sleep 2
           done
 
-          echo "API did not start correctly"
+          echo "La API no respondió correctamente al healthcheck."
+          echo "Log de la API:"
           cat api.log
           exit 1
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: maven
-
-      - name: Run Rest Assured tests
+      - name: Ejecutar pruebas API
         working-directory: tests/rest-assured-java
-        run: mvn test -DbaseUrl=$REST_BASE_URL
-
-      - name: Upload Maven Surefire reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rest-assured-surefire-reports
-          path: tests/rest-assured-java/target/surefire-reports/
-
-      - name: Upload API logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-log
-          path: api.log
-
-      - name: Stop API
-        if: always()
+        shell: bash
         run: |
-          if [ -f api.pid ]; then
-            kill $(cat api.pid) || true
-          fi
+          set -Eeuo pipefail
+          mvn test -DbaseUrl="$REST_BASE_URL"
+
+      - name: Publicar reporte
+        if: always()
+        uses: ./.github/actions/publish-api-report
+        with:
+          artifact-name: api-rest-assured-reports
+          report-directory: tests/rest-assured-java/target/surefire-reports
+          site-directory: tests/rest-assured-java/target/site
+          api-log: api.log
+          api-pid-file: api.pid
