@@ -1,5 +1,6 @@
 packages:
   - "api"
+  - "tests/playwright-ts"
 
 minimumReleaseAge: 1440
 

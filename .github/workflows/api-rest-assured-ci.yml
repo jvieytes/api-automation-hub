@@ -1,4 +1,4 @@
-name: API Rest Assured CI
+name: API Automation CI
 
 on:
   push:
@@ -17,8 +17,8 @@ permissions:
   id-token: write
 
 jobs:
-  api-rest-assured-tests:
-    name: Run API and Rest Assured tests
+  api-tests:
+    name: Run API and API Tests
     runs-on: ubuntu-latest
 
     env:
@@ -36,8 +36,11 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+
+          echo "Levantando API en $REST_BASE_URL"
           pnpm api:start > api.log 2>&1 &
           echo $! > api.pid
+
           sleep 1
 
           if ! ps -p "$(cat api.pid)" > /dev/null; then
@@ -46,13 +49,18 @@ jobs:
             exit 1
           fi
 
+          echo "API iniciada con PID $(cat api.pid)"
+
       - name: Healthcheck API
         shell: bash
         run: |
           set -Eeuo pipefail
 
+          echo "Validando healthcheck en $REST_BASE_URL/health"
+
           for i in {1..30}; do
             if curl -fsS "$REST_BASE_URL/health"; then
+              echo ""
               echo "API lista para ejecutar pruebas."
               exit 0
             fi
@@ -61,38 +69,133 @@ jobs:
             sleep 2
           done
 
-          echo "La API no respondió correctamente."
+          echo "La API no respondió correctamente al healthcheck."
           cat api.log
           exit 1
 
-      - name: Ejecutar pruebas API
-        working-directory: tests/rest-assured-java
+      - name: Ejecutar pruebas API Rest Assured
         shell: bash
         run: |
           set -Eeuo pipefail
-          mvn clean test allure:report -DbaseUrl="$REST_BASE_URL"
 
-      - name: Publicar reporte
+          mvn -f tests/rest-assured-java/pom.xml clean test -DbaseUrl="$REST_BASE_URL"
+
+      - name: Ejecutar pruebas API Playwright
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          pnpm test:playwright
+
+      - name: Publicar resultados crudos Rest Assured
         if: always()
-        uses: ./.github/actions/publish-api-report
+        uses: actions/upload-artifact@v4
         with:
-          artifact-name: allure-api-rest-assured-report
-          report-directory: tests/rest-assured-java/target/surefire-reports
-          allure-results-directory: tests/rest-assured-java/target/allure-results
-          allure-report-directory: tests/rest-assured-java/target/site/allure-report
-          api-log: api.log
-          api-pid-file: api.pid
+          name: allure-results-rest-assured
+          if-no-files-found: warn
+          path: tests/rest-assured-java/target/allure-results/
 
-      - name: Upload Allure report for GitHub Pages
+      - name: Publicar resultados crudos Playwright
         if: always()
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          path: tests/rest-assured-java/target/site/allure-report
+          name: allure-results-playwright
+          if-no-files-found: warn
+          path: tests/playwright-ts/allure-results/
 
-  deploy-allure-report:
-    name: Deploy Allure Report to GitHub Pages
-    needs: api-rest-assured-tests
+      - name: Publicar logs API
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-log
+          if-no-files-found: warn
+          path: api.log
+
+      - name: Detener API
+        if: always()
+        shell: bash
+        run: |
+          if [ -f api.pid ]; then
+            echo "Deteniendo API con PID $(cat api.pid)"
+            kill "$(cat api.pid)" || true
+          fi
+
+  report-rest-assured:
+    name: Report Allure Rest Assured
+    needs: api-tests
     if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preparar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias para Allure
+        uses: ./.github/actions/install-dependencies
+
+      - name: Descargar resultados Rest Assured
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-rest-assured
+          path: allure-results-rest-assured
+
+      - name: Generar reporte Allure Rest Assured
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          pnpm exec allure generate \
+            allure-results-rest-assured \
+            --clean \
+            -o allure-report-rest-assured
+
+      - name: Publicar artifact Allure Rest Assured
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-rest-assured
+          path: allure-report-rest-assured/
+
+  report-playwright:
+    name: Report Allure Playwright
+    needs: api-tests
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preparar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias para Allure
+        uses: ./.github/actions/install-dependencies
+
+      - name: Descargar resultados Playwright
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-playwright
+          path: allure-results-playwright
+
+      - name: Generar reporte Allure Playwright
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          pnpm exec allure generate \
+            allure-results-playwright \
+            --clean \
+            -o allure-report-playwright
+
+      - name: Publicar artifact Allure Playwright
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-playwright
+          path: allure-report-playwright/
+
+  deploy-allure-reports:
+    name: Deploy Allure Reports to GitHub Pages
+    needs:
+      - report-rest-assured
+      - report-playwright
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     environment:
@@ -100,6 +203,77 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Deploy Allure Report
+      - name: Descargar reporte Rest Assured
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-report-rest-assured
+          path: public/rest-assured
+
+      - name: Descargar reporte Playwright
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-report-playwright
+          path: public/playwright
+
+      - name: Crear landing page de reportes
+        shell: bash
+        run: |
+          cat > public/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+            <meta charset="UTF-8">
+            <title>API Automation Reports</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 40px;
+                background: #0d1117;
+                color: #f0f6fc;
+              }
+              h1 {
+                color: #58a6ff;
+              }
+              .card {
+                border: 1px solid #30363d;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 16px;
+                background: #161b22;
+              }
+              a {
+                color: #58a6ff;
+                font-size: 18px;
+                text-decoration: none;
+              }
+              a:hover {
+                text-decoration: underline;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>API Automation Reports</h1>
+
+            <div class="card">
+              <h2>Rest Assured</h2>
+              <p>Reporte Allure generado desde pruebas API con Java + Rest Assured.</p>
+              <a href="./rest-assured/index.html">Abrir reporte Allure Rest Assured</a>
+            </div>
+
+            <div class="card">
+              <h2>Playwright API</h2>
+              <p>Reporte Allure generado desde pruebas API con TypeScript + Playwright.</p>
+              <a href="./playwright/index.html">Abrir reporte Allure Playwright</a>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Preparar artifact para GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy Allure Reports
         id: deployment
         uses: actions/deploy-pages@v4
