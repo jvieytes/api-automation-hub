@@ -1,6 +1,7 @@
 package com.portfolio.qa.clients;
 
-import com.portfolio.qa.endpoints.Endpoints;
+import com.portfolio.qa.core.BaseApiClient;
+import com.portfolio.qa.core.Endpoints;
 import io.restassured.response.Response;
 
 public class TestDataClient extends BaseApiClient {

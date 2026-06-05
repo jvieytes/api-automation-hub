@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.equalTo;
 class HealthApiTest extends BaseApiTest {
 
     @Test
-    @DisplayName("Validar que la API responda estado UP")
+    @DisplayName("Debe retornar estado UP al consultar el healthcheck")
     void healthcheckShouldReturnUp() {
         healthClient.getHealth()
             .then()

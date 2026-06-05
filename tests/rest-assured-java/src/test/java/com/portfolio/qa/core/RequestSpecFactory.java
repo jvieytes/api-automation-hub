@@ -1,6 +1,5 @@
-package com.portfolio.qa.specs;
+package com.portfolio.qa.core;
 
-import com.portfolio.qa.config.TestConfig;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
