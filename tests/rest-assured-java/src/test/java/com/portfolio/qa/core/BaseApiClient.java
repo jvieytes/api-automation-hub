@@ -1,6 +1,5 @@
-package com.portfolio.qa.clients;
+package com.portfolio.qa.core;
 
-import com.portfolio.qa.specs.RequestSpecFactory;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.specification.RequestSpecification;
 

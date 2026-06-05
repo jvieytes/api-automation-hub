@@ -1,4 +1,4 @@
-package com.portfolio.qa.config;
+package com.portfolio.qa.core;
 
 public final class TestConfig {
 
