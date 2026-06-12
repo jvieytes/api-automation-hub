@@ -87,6 +87,14 @@ jobs:
 
           pnpm test:playwright
 
+      - name: Instalar y verificar binario Cypress
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          pnpm --filter @portfolio/cypress-api exec cypress install
+          pnpm --filter @portfolio/cypress-api exec cypress verify
+
       - name: Ejecutar pruebas API Cypress
         shell: bash
         run: |
