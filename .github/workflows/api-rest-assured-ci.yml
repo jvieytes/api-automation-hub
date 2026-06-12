@@ -87,6 +87,13 @@ jobs:
 
           pnpm test:playwright
 
+      - name: Ejecutar pruebas API Cypress
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          pnpm test:cypress
+
       - name: Publicar resultados crudos Rest Assured
         if: always()
         uses: actions/upload-artifact@v4
@@ -102,6 +109,14 @@ jobs:
           name: allure-results-playwright
           if-no-files-found: warn
           path: tests/playwright-ts/allure-results/
+
+      - name: Publicar resultados crudos Cypress
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-cypress
+          if-no-files-found: warn
+          path: tests/cypress-ts/allure-results/
 
       - name: Publicar logs API
         if: always()
@@ -188,11 +203,46 @@ jobs:
           name: allure-report-playwright
           path: allure-report-playwright/
 
+  report-cypress:
+    name: Report Allure Cypress
+    needs: api-tests
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preparar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias para Allure
+        uses: ./.github/actions/install-dependencies
+
+      - name: Descargar resultados Cypress
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-cypress
+          path: cypress/allure-results
+
+      - name: Generar reporte Allure Cypress
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          pnpm exec allure generate \
+            --cwd cypress \
+            --output allure-report-cypress
+
+      - name: Publicar artifact Allure Cypress
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-cypress
+          path: allure-report-cypress/
+
   deploy-allure-reports:
     name: Deploy Allure Reports to GitHub Pages
     needs:
       - report-rest-assured
       - report-playwright
+      - report-cypress
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -216,6 +266,12 @@ jobs:
           name: allure-report-playwright
           path: public/playwright
 
+      - name: Descargar reporte Cypress
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-report-cypress
+          path: public/cypress
+
       - name: Preparar Front Report Allure
         shell: bash
         run: |
@@ -233,7 +289,7 @@ jobs:
           EOF
 
           echo "Contenido final de public:"
-          find public -maxdepth 2 -type f | sort | head -80
+          find public -maxdepth 2 -type f | sort | head -120
 
       - name: Preparar artifact para GitHub Pages
         uses: actions/upload-pages-artifact@v3

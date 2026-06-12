@@ -116,8 +116,15 @@ h1 {
 
 .reports-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns:
+    repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
+}
+
+.icon.cy {
+  background: linear-gradient(135deg,
+      #22c55e,
+      #0f766e);
 }
 
 .report-card {
@@ -190,6 +197,7 @@ h2 {
 }
 
 @media (max-width: 900px) {
+
   .hero,
   .reports-grid {
     grid-template-columns: 1fr;

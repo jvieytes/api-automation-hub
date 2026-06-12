@@ -11,10 +11,11 @@
   "scripts": {
     "api:start": "pnpm --filter @portfolio/api start",
     "api:dev": "pnpm --filter @portfolio/api dev",
-    "audit": "pnpm audit --audit-level moderate",
+    "test:rest-assured": "mvn -f tests/rest-assured-java/pom.xml clean test",
     "test:playwright": "pnpm --filter @portfolio/playwright-api test",
-    "allure:generate": "pnpm exec allure generate tests/rest-assured-java/target/allure-results tests/playwright-ts/allure-results --clean -o allure-report",
-    "allure:open": "pnpm exec allure open allure-report"
+    "test:cypress": "pnpm --filter @portfolio/cypress-api test",
+    "cypress:open": "pnpm --filter @portfolio/cypress-api open",
+    "cypress:verify": "pnpm --filter @portfolio/cypress-api verify"
   },
   "keywords": [
     "qa",
