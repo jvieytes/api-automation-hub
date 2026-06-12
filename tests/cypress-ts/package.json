@@ -1,0 +1,19 @@
+{
+  "name": "@portfolio/cypress-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "cypress run --browser electron",
+    "open": "cypress open",
+    "install:binary": "cypress install",
+    "verify": "cypress verify"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "allure-cypress": "^3.0.0",
+    "allure-js-commons": "^3.0.0",
+    "cypress": "^15.0.0",
+    "typescript": "^5.9.0"
+  }
+}
