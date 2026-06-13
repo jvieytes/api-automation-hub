@@ -5,13 +5,13 @@ Feature: Tasks CRUD API - Happy paths
 
     * def reset = call read('classpath:karate/clients/test-data-client.feature@resetData')
     * match reset.responseStatus == 200
-    * match reset.response.response.total >= 2
+    * assert reset.response.response.total >= 2
 
   Scenario: Debe listar tareas correctamente
     * def result = call read('classpath:karate/clients/task-client.feature@getTasks')
 
     Then match result.responseStatus == 200
-    And match result.response.response.total >= 2
+    And assert result.response.response.total >= 2
     And match result.response.response.items == '#[]'
 
   Scenario: Debe crear una tarea correctamente

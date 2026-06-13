@@ -4,4 +4,4 @@ Feature: Test Data API
     * def result = call read('classpath:karate/clients/test-data-client.feature@resetData')
 
     Then match result.responseStatus == 200
-    And match result.response.response.total >= 2
+    And assert result.response.response.total >= 2
