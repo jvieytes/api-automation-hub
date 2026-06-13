@@ -11,7 +11,7 @@ class KarateApiTest {
 
     @Test
     void runApiHappyPathTests() {
-        Results results = Runner.path("tests/karate-java/src/resources/karate/tests")
+        Results results = Runner.path("classpath:karate/tests")
                 .tags("~@ignore")
                 .outputHtmlReport(true)
                 .outputJunitXml(true)
@@ -19,7 +19,7 @@ class KarateApiTest {
 
         assertTrue(
                 results.getScenariosTotal() > 0,
-                "Karate no ejecutó ningún escenario. Revisar ruta tests/karate-java/src/resources/karate/tests o tags @ignore.");
+                "Karate no ejecutó ningún escenario. Revisar ruta classpath:karate/tests o tags @ignore.");
 
         assertEquals(0, results.getFailCount(), results.getErrorMessages());
     }
