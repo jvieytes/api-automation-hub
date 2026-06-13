@@ -102,6 +102,13 @@ jobs:
 
           pnpm test:cypress
 
+      - name: Ejecutar pruebas API Karate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          mvn -f tests/karate-java/pom.xml clean test -DbaseUrl="$REST_BASE_URL"
+
       - name: Publicar resultados crudos Rest Assured
         if: always()
         uses: actions/upload-artifact@v4
@@ -125,6 +132,14 @@ jobs:
           name: allure-results-cypress
           if-no-files-found: warn
           path: tests/cypress-ts/allure-results/
+
+      - name: Publicar reporte Karate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: karate-report
+          if-no-files-found: warn
+          path: tests/karate-java/target/karate-reports/
 
       - name: Publicar logs API
         if: always()
@@ -245,12 +260,46 @@ jobs:
           name: allure-report-cypress
           path: allure-report-cypress/
 
+  report-karate:
+    name: Report Karate
+    needs: api-tests
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar reporte Karate
+        uses: actions/download-artifact@v4
+        with:
+          name: karate-report
+          path: karate-report
+
+      - name: Validar contenido reporte Karate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "Contenido descargado desde artifact karate-report:"
+          find karate-report -maxdepth 2 -type f | sort | head -80
+
+          if [ ! -f karate-report/karate-summary.html ]; then
+            echo "No se encontró karate-summary.html dentro de karate-report."
+            echo "Revisa si Karate generó el reporte en tests/karate-java/target/karate-reports/"
+            exit 1
+          fi
+
+      - name: Publicar artifact Karate Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: karate-html-report
+          path: karate-report/
+
   deploy-allure-reports:
     name: Deploy Allure Reports to GitHub Pages
     needs:
       - report-rest-assured
       - report-playwright
       - report-cypress
+      - report-karate
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -280,6 +329,12 @@ jobs:
           name: allure-report-cypress
           path: public/cypress
 
+      - name: Descargar reporte Karate
+        uses: actions/download-artifact@v4
+        with:
+          name: karate-html-report
+          path: public/karate
+
       - name: Preparar Front Report Allure
         shell: bash
         run: |
@@ -297,7 +352,7 @@ jobs:
           EOF
 
           echo "Contenido final de public:"
-          find public -maxdepth 2 -type f | sort | head -120
+          find public -maxdepth 2 -type f | sort | head -160
 
       - name: Preparar artifact para GitHub Pages
         uses: actions/upload-pages-artifact@v3

@@ -121,12 +121,6 @@ h1 {
   gap: 24px;
 }
 
-.icon.cy {
-  background: linear-gradient(135deg,
-      #22c55e,
-      #0f766e);
-}
-
 .report-card {
   padding: 28px;
 }
@@ -155,6 +149,22 @@ h1 {
 
 .icon.ts {
   background: linear-gradient(135deg, var(--blue), #8957e5);
+}
+
+.icon.cy {
+  background: linear-gradient(
+    135deg,
+    #22c55e,
+    #0f766e
+  );
+}
+
+.icon.kt {
+  background: linear-gradient(
+    135deg,
+    #f97316,
+    #dc2626
+  );
 }
 
 h2 {
@@ -197,7 +207,6 @@ h2 {
 }
 
 @media (max-width: 900px) {
-
   .hero,
   .reports-grid {
     grid-template-columns: 1fr;
