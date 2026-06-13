@@ -15,7 +15,8 @@
     "test:playwright": "pnpm --filter @portfolio/playwright-api test",
     "test:cypress": "pnpm --filter @portfolio/cypress-api test",
     "cypress:open": "pnpm --filter @portfolio/cypress-api open",
-    "cypress:verify": "pnpm --filter @portfolio/cypress-api verify"
+    "cypress:verify": "pnpm --filter @portfolio/cypress-api verify",
+    "test:karate": "mvn -f tests/karate-java/pom.xml clean test"
   },
   "keywords": [
     "qa",
