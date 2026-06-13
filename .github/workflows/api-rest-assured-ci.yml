@@ -133,73 +133,26 @@ jobs:
           if-no-files-found: warn
           path: tests/cypress-ts/allure-results/
 
-      - name: Preparar artifact reporte Karate
+      - name: Validar reporte Karate generado
         if: always()
         shell: bash
         run: |
           set -Eeuo pipefail
 
           KARATE_REPORT_DIR="tests/karate-java/target/karate-reports"
-          mkdir -p "$KARATE_REPORT_DIR"
 
           echo "Buscando reporte nativo de Karate en: $KARATE_REPORT_DIR"
           find tests/karate-java/target -maxdepth 4 -type f 2>/dev/null | sort | head -120 || true
 
           if [ ! -f "$KARATE_REPORT_DIR/karate-summary.html" ]; then
-            echo "Karate no generó karate-summary.html. Se creará reporte de diagnóstico."
-
-            cat > "$KARATE_REPORT_DIR/karate-summary.html" <<EOF
-          <!DOCTYPE html>
-          <html lang="es">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Karate Report - Diagnostic</title>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                margin: 40px;
-                background: #0d1117;
-                color: #f0f6fc;
-              }
-              .card {
-                border: 1px solid #30363d;
-                border-radius: 12px;
-                background: #161b22;
-                padding: 24px;
-                max-width: 920px;
-              }
-              h1 {
-                color: #f97316;
-              }
-              code {
-                background: #21262d;
-                padding: 2px 6px;
-                border-radius: 6px;
-              }
-              pre {
-                background: #21262d;
-                padding: 16px;
-                border-radius: 8px;
-                overflow-x: auto;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <h1>Karate Report - Diagnostic</h1>
-              <p>No se encontró el archivo nativo <code>karate-summary.html</code>.</p>
-              <p>Esto normalmente significa que Karate no ejecutó correctamente, no encontró features o el reporte fue generado en otra ruta.</p>
-              <p>Revisar en GitHub Actions el step <strong>Ejecutar pruebas API Karate</strong>.</p>
-              <pre>Ruta esperada: tests/karate-java/target/karate-reports/karate-summary.html</pre>
-            </div>
-          </body>
-          </html>
-          EOF
+            echo "No se generó karate-summary.html."
+            echo "Revisar el step Ejecutar pruebas API Karate."
+            echo "Ruta esperada: $KARATE_REPORT_DIR/karate-summary.html"
+            exit 1
           fi
 
-          echo "Contenido final del reporte Karate:"
-          find "$KARATE_REPORT_DIR" -maxdepth 2 -type f | sort | head -120
+          echo "Reporte Karate generado correctamente:"
+          ls -la "$KARATE_REPORT_DIR"
 
       - name: Publicar reporte Karate
         if: always()
