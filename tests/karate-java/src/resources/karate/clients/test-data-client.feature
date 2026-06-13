@@ -1,4 +1,3 @@
-@ignore
 Feature: Test data client
 
   Background:

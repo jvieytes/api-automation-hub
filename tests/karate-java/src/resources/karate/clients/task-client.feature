@@ -1,4 +1,3 @@
-@ignore
 Feature: Task client
 
   Background:

@@ -107,6 +107,16 @@ jobs:
         run: |
           set -Eeuo pipefail
 
+          echo "Validando features Karate existentes:"
+          find tests/karate-java/src/test/resources/karate/tests -name "*.feature" -type f | sort
+
+          FEATURE_COUNT="$(find tests/karate-java/src/test/resources/karate/tests -name "*.feature" -type f | wc -l | tr -d ' ')"
+
+          if [ "$FEATURE_COUNT" = "0" ]; then
+            echo "No se encontraron archivos .feature en tests/karate-java/src/test/resources/karate/tests"
+            exit 1
+          fi
+
           mvn -f tests/karate-java/pom.xml clean test -DbaseUrl="$REST_BASE_URL"
 
       - name: Publicar resultados crudos Rest Assured
@@ -383,4 +393,3 @@ jobs:
       - name: Deploy Allure Reports
         id: deployment
         uses: actions/deploy-pages@v4
-
